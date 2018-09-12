@@ -1,10 +1,10 @@
 require('dotenv').config();
-var express = require('express');
-var jwt = require('jsonwebtoken');
-var mongoose = require('mongoose');
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 
-var db = require('../models');
-var router = express.Router();
+const db = require('../models');
+const router = express.Router();
 
 // POST /auth/login route - returns a JWT
 router.post('/login', (req, res) => {
@@ -28,7 +28,7 @@ router.post('/login', (req, res) => {
     });
 
     // Send that token and the user info
-    res.send({ user: user, token: token });
+    res.send({ token: token });
   })
   .catch((err) => {
     console.log('error was', err);
@@ -43,6 +43,7 @@ router.post('/signup', function(req, res) {
   //TODO: First check if the user already exists
   db.User.findOne({ email: req.body.email })
   .then((user) => {
+    console.log('found user', user)
     // Database call was a success
     if(user){
       // If the user exists already, don't let them create a duplicate account. Instead they should log in.
@@ -52,12 +53,13 @@ router.post('/signup', function(req, res) {
     // Great! This is a new user. Let's make them an account!
     db.User.create(req.body)
     .then((createdUser) => {
+      console.log('created user', createdUser)
       // Make a token and send it as JSON, so the user can remain logged in
       const token = jwt.sign(createdUser.toJSON(), process.env.JWT_SECRET, {
         expiresIn: 60 * 60 * 24 // 24 hours, in seconds
       });
 
-      res.send({ user: createdUser, token: token })
+      res.send({ token: token })
     })
     .catch((err) => {
       console.log('err', err);
@@ -70,7 +72,7 @@ router.post('/signup', function(req, res) {
   });
 });
 
-// This is checked on a browser refresh
+// This what is returned when client queries for new user data
 router.post('/me/from/token', function(req, res) {
   db.User.findById(req.user.id)
   .then(function(user){
